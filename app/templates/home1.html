@@ -1,0 +1,181 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}" />
+    <title>NASA HACK</title>
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,600,700,800" rel="stylesheet" />
+    <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet" />
+    <link href="{% static 'css/nucleo-icons.css' %}" rel="stylesheet" />
+    <link href="{% static 'css/style.css' %}" rel="stylesheet" />
+    <link href="{% static 'demo/demo.css' %}" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="main-panel">
+            <nav class="navbar navbar-expand-lg navbar-absolute navbar-transparent">
+                <div class="container-fluid">
+                    <div class="navbar-wrapper"></div>
+                    <div class="collapse navbar-collapse" id="navigation"></div>
+                </div>
+            </nav>
+
+            <div class="content">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header" style="min-height: 260px">
+                                <h6 class="title d-inline">Automated reporting tool</h6>
+                                <p class="card-category d-inline" style="float: right;">Oct 5</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card card-analysis" style="min-height: 115px">
+                                    <div class="card-content">
+                                        <span class="number">{{qty_records}}</span>
+                                        <img src="{% static 'svg/arrow.svg' %}" class="card-image" />
+                                    </div>
+                                    <p class="card-category d-inline" style="float: center;">Total events - Last month</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-analysis" style="min-height: 115px">
+                                    <div class="card-content">
+                                        <span class="number">6</span>
+                                        <img src="{% static 'svg/warning.svg' %}" class="card-image" />
+                                    </div>
+                                    <p class="card-category d-inline" style="float: center;">average Magnitud level</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card card-analysis" style="min-height: 115px">
+                                    <div class="card-content">
+                                        <span class="number">82</span>
+                                        <img src="{% static 'svg/percentage.svg' %}" class="card-image" />
+                                    </div>
+                                    <p class="card-category d-inline" style="float: center;">Reduction percentage</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header" style="min-height: 115px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card card-tasks">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-sm-6 text-left">
+                                        <h5 class="card-category">Total Shipments</h5>
+                                        <h2 class="card-title">Performance</h2>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
+                                            <button  type="button" class="btn btn-sm btn-primary btn-simple active" onclick="downloadCSV()">Export CSV</button>
+                                            <button type="button" class="btn btn-sm btn-primary btn-simple active" onclick="downloadMSeed()">Export miniSEED</button>
+                                        </div>
+                                    </div>
+                                    <script>
+
+                                    let id = null;
+
+                                    function setRecordId(button) {
+                                        id = button.getAttribute('data-record-id');
+                                    }
+
+                                    function downloadCSV(){
+                                        window.location.href = "{% url 'download_csv' record_id='0' %}".replace('0', id);
+                                    }
+
+                                    function downloadMSeed(){
+                                        window.location.href = "{% url 'download_miniseed' record_id='0' %}".replace('0', id);
+                                    }
+                                    
+                                    </script>
+                                </div>
+                            </div>
+                            <div class="card-body" style="padding: 0">
+                                <div class="chart-area">
+                                    <canvas id="chartBig1" style="width:100%; height:300px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-tasks">
+                            <div class="card-header">
+                                <form class="float-right" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %} {{ form.as_p }}
+                                    <button class="btn btn-sm btn-primary btn-simple active" id="0" type="submit">Sync</button>
+                                </form>                                
+                                <h6 class="title d-inline">Historical</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-full-width table-responsive">
+                                    <table class="table tablesorter" id="">
+                                        <thead class="text-primary">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Start</th>
+                                            <th>End</th>
+                                            <th class="text-center">Select</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for record in records %}
+                                                <tr>
+                                                    <td>{{ record.id }}</td>
+                                                    <td>{{ record.time_start|date:"Y-m-d H:i:s" }}</td>
+                                                    <td>{{ record.time_end|date:"Y-m-d H:i:s" }}</td>
+                                                    <td class="text-center">
+                                                        <button class="btn btn-sm btn-primary select-record" data-record-id="{{ record.id }}" onclick="setRecordId(this)">Select</button>
+                                                    </td>
+                                                </tr>
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No records found.</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="copyright">
+                        © <script>document.write(new Date().getFullYear());</script>
+                        made with love by
+                        <a href="https://github.com/n-donati/hack-nasa" target="_blank">Git Push It Real Good</a> for NASA.
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="{% static 'js/core/jquery.min.js' %}"></script>
+    <script src="{% static 'js/core/popper.min.js' %}"></script>
+    <script src="{% static 'js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/plugins/perfect-scrollbar.jquery.min.js' %}"></script>
+    <script src="{% static 'js/charts.js' %}"></script>
+</body>
+</html>
